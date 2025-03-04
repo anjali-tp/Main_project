@@ -11,8 +11,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <!-- The above 4 meta tags *must* come first in the head; any other head content must come *after* these tags -->
   <!-- Title -->
-  {{#if builder}}
-  <title>Workspace</title>
+  {{#if govt}}
+  <title>Official Portal</title>
   {{else}}
   <title>User</title>
   {{/if}}
@@ -73,8 +73,8 @@
 </style>
 
 <body>
-  {{#if builder}}
-  {{>builder-header}}
+  {{#if govt}}
+  {{>govt-header}}
   {{else if admin}}
   {{>admin-header}}
   {{else}}
