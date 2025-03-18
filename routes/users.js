@@ -1,6 +1,5 @@
 var express = require("express");
 var userHelper = require("../helper/userHelper");
-var builderHelper = require("../helper/govtHelper");
 
 var router = express.Router();
 var db = require("../config/connection");
@@ -20,9 +19,7 @@ const verifySignedIn = (req, res, next) => {
 /* GET home page. */
 router.get("/", async function (req, res, next) {
   let user = req.session.user;
-  userHelper.getAllworkspaces().then((workspaces) => {
-    res.render("users/home", { admin: false, workspaces, user });
-  });
+    res.render("users/home", { admin: false, user });
 });
 
 ///////ADD complaint/////////////////////                                         
@@ -37,7 +34,7 @@ router.post("/add-complaint", async (req, res) => {
   }
 
   const { date, subject, desc, department, category, locality, office_address, "attachmentType[]": attachmentTypes,
-    applicantId, applicantName, applicantEmail, applicantPhone, applicantPincode } = req.body;
+    applicantId, applicantName, applicantEmail, applicantPhone, applicantPincode} = req.body;
 
   const complaintData = {
     applicantId,
@@ -124,61 +121,50 @@ router.get("/service", async function (req, res) {
   res.render("users/service", { admin: false, });
 })
 
-
-router.post("/add-feedback", async function (req, res) {
-  let user = req.session.user; // Ensure the user is logged in and the session is set
-  let feedbackText = req.body.text; // Get feedback text from form input
-  let username = req.body.username; // Get username from form input
-  let workspaceId = req.body.workspaceId; // Get workspace ID from form input
-  let builderId = req.body.builderId; // Get builder ID from form input
-
-  if (!user) {
-    return res.status(403).send("User not logged in");
-  }
-
-  try {
-    const feedback = {
-      userId: ObjectId(user._id), // Convert user ID to ObjectId
-      workspaceId: ObjectId(workspaceId), // Convert workspace ID to ObjectId
-      builderId: ObjectId(builderId), // Convert builder ID to ObjectId
-      text: feedbackText,
-      username: username,
-      createdAt: new Date() // Store the timestamp
-    };
-
-    await userHelper.addFeedback(feedback);
-    res.redirect("/single-workspace/" + workspaceId); // Redirect back to the workspace page
-  } catch (error) {
-    console.error("Error adding feedback:", error);
-    res.status(500).send("Server Error");
-  }
-});
-
-
-
-router.get("/single-workspace/:id", async function (req, res) {
+router.get("/rate-complaint/:id", verifySignedIn, async function (req, res, next) {
   let user = req.session.user;
-  const workspaceId = req.params.id;
+  let id = req.params.id;
+  let cmp= await userHelper.getStatusById(id)
+  let status=cmp.status;
+  res.render("users/rate-complaint", { admin: false, user,id,status });
+});
 
+router.post("/rate-complaint", verifySignedIn, async (req, res) => {
   try {
-    const workspace = await userHelper.getWorkspaceById(workspaceId);
-
-    if (!workspace) {
-      return res.status(404).send("Workspace not found");
-    }
-    const feedbacks = await userHelper.getFeedbackByWorkspaceId(workspaceId); // Fetch feedbacks for the specific workspace
-
-    res.render("users/single-workspace", {
-      admin: false,
-      user,
-      workspace,
-      feedbacks
-    });
+    const { complaintId, rating, username, feedback } = req.body;
+    const finalRating = rating ? parseInt(rating) : 0;
+ 
+    const userId = req.session.user._id;
+    const cmp= await userHelper.getComplaintDetails(complaintId);
+    const department= cmp.department
+    const updatedBy=cmp.updatedBy
+    const status=cmp.status
+    
+    await db.get().collection(collections.FEEDBACK_COLLECTION)
+      .updateOne(
+        { complaintId, userId }, // filter: find a feedback for this complaint by this user
+        { $set: {
+          complaintId, userId,
+            username,
+            rating: finalRating,
+            feedback,   
+            department,
+            updatedBy,
+            status,        
+            createdAt: new Date()
+          }
+        },
+        { upsert: true }
+      );
+    
+    res.redirect("/my-complaints")
   } catch (error) {
-    console.error("Error fetching workspace:", error);
-    res.status(500).send("Server Error");
+    console.error("Error rating complaint", error);
+    res.status(500).json({ success: false, error: "Internal Server Error" });
   }
 });
+
+
 
 
 
@@ -211,7 +197,9 @@ router.get("/signup", function (req, res) {
 });
 
 router.post("/signup", async function (req, res) {
-  const { Fname, Email, Phone, Address, Pincode, District, Password } = req.body;
+  console.log("&&&&&&&&&&&&&&&&",req.body,"")
+  const { Fname, Email, Phone, Address, Pincode, District, Password ,aadhar,
+    ward,village} = req.body;
   let errors = {};
 
   // Check if email already exists
@@ -229,7 +217,10 @@ router.post("/signup", async function (req, res) {
     errors.phone = "Please enter your phone number.";
   } else if (!/^\d{10}$/.test(Phone)) {
     errors.phone = "Phone number must be exactly 10 digits.";
-  } else {
+  } else if (!/^\d{12}$/.test(aadhar)) {
+    errors.aadhar = "Aadhar number must be exactly 12 digits.";
+  } 
+  else {
     const existingPhone = await db.get()
       .collection(collections.USERS_COLLECTION)
       .findOne({ Phone });
@@ -249,6 +240,8 @@ router.post("/signup", async function (req, res) {
   if (!Email) errors.email = "Please enter your email.";
   if (!Address) errors.address = "Please enter your address.";
   if (!District) errors.district = "Please enter your city.";
+  if (!ward) errors.address = "Please enter your ward.";
+  if (!village) errors.district = "Please enter your village.";
 
   // Password validation
   if (!Password) {
@@ -267,6 +260,9 @@ router.post("/signup", async function (req, res) {
       errors,
       Fname,
       Email,
+      aadhar,
+      ward,
+      village,
       Phone,
       Address,
       Pincode,
@@ -430,58 +426,6 @@ router.post("/edit-profile/:id", verifySignedIn, async function (req, res) {
 });
 
 
-
-
-
-router.get('/place-order/:id', verifySignedIn, async (req, res) => {
-  const workspaceId = req.params.id;
-
-  // Validate the workspace ID
-  if (!ObjectId.isValid(workspaceId)) {
-    return res.status(400).send('Invalid workspace ID format');
-  }
-
-  let user = req.session.user;
-
-  // Fetch the product details by ID
-  let workspace = await userHelper.getWorkspaceDetails(workspaceId);
-
-  // If no workspace is found, handle the error
-  if (!workspace) {
-    return res.status(404).send('Workspace not found');
-  }
-
-  // Render the place-order page with workspace details
-  res.render('users/place-order', { user, workspace });
-});
-
-router.post('/place-order', async (req, res) => {
-  let user = req.session.user;
-  let workspaceId = req.body.workspaceId;
-
-  // Fetch workspace details
-  let workspace = await userHelper.getWorkspaceDetails(workspaceId);
-  let totalPrice = workspace.Price; // Get the price from the workspace
-
-  // Call placeOrder function
-  userHelper.placeOrder(req.body, workspace, totalPrice, user)
-    .then((orderId) => {
-      if (req.body["payment-method"] === "COD") {
-        res.json({ codSuccess: true });
-      } else {
-        userHelper.generateRazorpay(orderId, totalPrice).then((response) => {
-          res.json(response);
-        });
-      }
-    })
-    .catch((err) => {
-      console.error("Error placing order:", err);
-      res.status(500).send("Internal Server Error");
-    });
-});
-
-
-
 router.post("/verify-payment", async (req, res) => {
   console.log(req.body);
   userHelper
@@ -510,42 +454,13 @@ router.get("/my-complaints", verifySignedIn, async function (req, res) {
   let cmp = await userHelper.getUserComplaint(userId);
   res.render("users/my-complaints", { admin: false, user, cmp});
 });
-
-router.get("/view-ordered-workspaces/:id", verifySignedIn, async function (req, res) {
+router.get("/view-complaint/:id", verifySignedIn, async function (req, res) {
   let user = req.session.user;
-  let orderId = req.params.id;
-
-  // Log the orderId to see if it's correctly retrieved
-  console.log("Retrieved Order ID:", orderId);
-
-  // Check if orderId is valid
-  if (!ObjectId.isValid(orderId)) {
-    console.error('Invalid Order ID format:', orderId);  // Log the invalid ID
-    return res.status(400).send('Invalid Order ID');
-  }
-
-  try {
-    let workspaces = await userHelper.getOrderWorkspaces(orderId);
-    res.render("users/order-workspaces", {
-      admin: false,
-      user,
-      workspaces,
-    });
-  } catch (err) {
-    console.error('Error fetching ordered workspaces:', err);
-    res.status(500).send('Internal Server Error');
-  }
+ let cmpId = req.params.id;
+  let cmp = await userHelper.getComplaintDetails(cmpId);
+   // console.log(officials,"viewwwwwww")
+    res.render("users/view-complaint", { admin: false, user,cmp});
 });
-
-
-
-router.get("/cancel-order/:id", verifySignedIn, function (req, res) {
-  let orderId = req.params.id;
-  userHelper.cancelOrder(orderId).then(() => {
-    res.redirect("/orders");
-  });
-});
-
 router.post("/search", verifySignedIn, async function (req, res) {
   let user = req.session.user;
   let userId = req.session.user._id;
