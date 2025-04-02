@@ -55,12 +55,24 @@ app.engine(
       eq: function (a, b) {
         return a === b;
       },
+      isImage:function (filename) {
+        return filename.match(/\.(jpg|jpeg|png)$/i) ? true : false;
+      },
+      isVideo:function (filename) {
+        return filename.match(/\.(mp4|avi|mov)$/i) ? true : false;
+      },
+      isPDF:function (filename) {
+        return filename.match(/\.pdf$/i) ? true : false;
+      },
       formatDate: function (dateString) {
         const date = new Date(dateString);
         const day = String(date.getDate()).padStart(2, '0');
         const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
         const year = date.getFullYear();
         return `${day}-${month}-${year}`; // Return the formatted date
+      },
+      currentDateTime: function () {
+        return moment().format("YYYY-MM-DDTHH:mm")
       },
     },
   })
