@@ -84,20 +84,38 @@
                                         {{{cmp.desc}}}
                                     </div>
                                 </div>
-                                {{!-- <div class="form-group">
+                                <div class="form-group">
                                     <label class="form-label">Attachments</label>
-                                    <div id="attachmentContainer">
-                                        <div class="attachment-input">
-                                            <select name="attachmentType[]" class="form-select attachment-type">
-                                                <option value="image">Image (PNG)</option>
-                                                <option value="video">Video (MP4)</option>
-                                                <option value="pdf">PDF</option>
-                                            </select>
-                                            <input type="file" name="attachments[]" class="form-control"
-                                                accept="image/png,video/mp4,application/pdf">
-                                        </div>
-                                    </div>
-                                </div> --}}
+                                     {{#if cmp.attachments.length}}
+  <ul style="list-style: none; padding: 0;">
+  {{#each cmp.attachments}}
+    <li style="margin-bottom: 15px;">
+      {{#if (isImage this)}}
+        <a href="/upload/{{this}}" target="_blank">
+          <img src="/upload/{{this}}" alt="Attachment" width="200" style="display: block;">
+        </a>
+      {{else if (isVideo this)}}
+        <a href="/upload/{{this}}" target="_blank">
+          <video width="300" controls style="display: block;">
+            <source src="/upload/{{this}}" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+        </a>
+      {{else if (isPDF this)}}
+        <a href="/upload/{{this}}" target="_blank" style="display: block; font-weight: bold; color: blue;">
+          View PDF
+        </a>
+      {{else}}
+        <a href="/upload/{{this}}" download style="display: block; font-weight: bold; color: green;">
+          Download File
+        </a>
+      {{/if}}
+    </li>
+  {{/each}}
+</ul>
+{{else}}
+  <p>No attachments available</p>
+{{/if}}                                </div>
 
                             </div>
                         </div>
@@ -149,14 +167,14 @@
                                 <!-- Grievance Site Address -->
                                 <div class="form-group">
                                     <label class="form-label" for="office_address">Grievance Site Address</label>
-                                    <textarea class="form-control" id="office_address" name="office_address" rows="4"
+                                    <textarea class="form-control" id="office_address" name="office_address" rows="2"
                                         readonly>{{cmp.office_address}}</textarea>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="pb-3"></div>
+               
             </div>
         </div>
     </div>
@@ -166,36 +184,7 @@
             <div class="card-body">
                 <h5 class="card-title">Complaint Attachments</h5>
            
-                {{#if cmp.attachments.length}}
-  <ul style="list-style: none; padding: 0;">
-  {{#each cmp.attachments}}
-    <li style="margin-bottom: 15px;">
-      {{#if (isImage this)}}
-        <a href="/upload/{{this}}" target="_blank">
-          <img src="/upload/{{this}}" alt="Attachment" width="200" style="display: block;">
-        </a>
-      {{else if (isVideo this)}}
-        <a href="/upload/{{this}}" target="_blank">
-          <video width="300" controls style="display: block;">
-            <source src="/upload/{{this}}" type="video/mp4">
-            Your browser does not support the video tag.
-          </video>
-        </a>
-      {{else if (isPDF this)}}
-        <a href="/upload/{{this}}" target="_blank" style="display: block; font-weight: bold; color: blue;">
-          View PDF
-        </a>
-      {{else}}
-        <a href="/upload/{{this}}" download style="display: block; font-weight: bold; color: green;">
-          Download File
-        </a>
-      {{/if}}
-    </li>
-  {{/each}}
-</ul>
-{{else}}
-  <p>No attachments available</p>
-{{/if}}
+               
             </div>
         </div>
     </div>

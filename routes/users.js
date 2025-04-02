@@ -119,7 +119,7 @@ router.get("/rate-complaint/", verifySignedIn, async function (req, res, next) {
   let user = req.session.user;
   let id = req.query.id;
   console.log("sssssssss",id)
-  await userHelper.getStatusById(id).then((data)=>{
+  await userHelper.getComplaintDetails(id).then((data)=>{
     let status=data.status;
     res.render("users/rate-complaint", { admin: false, user,id,status });
     //console.log(cmp)

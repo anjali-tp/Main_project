@@ -65,21 +65,50 @@ module.exports = {
       }
     });
   },
-  getStatusById: (Id) => {
+  getUserComplaint: (userId) => {
     return new Promise(async (resolve, reject) => {
       try {
         let cmp = await db
           .get()
           .collection(collections.COMPLAINTS_COLLECTION)
-          .findOne({ complaintId: Id }) // Use 'userId' directly, not inside 'orderObject'
-          console.log(cmp,"lllcmppppp")
+          .aggregate([
+            {
+              $match: { applicantId: userId }
+            },
+            {
+              $lookup: {
+                from: collections.FEEDBACK_COLLECTION, // Replace with the actual feedback collection name
+                localField: "complaintId",
+                foreignField: "complaintId",
+                as: "feedbackData"
+              }
+            },
+            {
+              $addFields: {
+                isFeedback: { $gt: [{ $size: "$feedbackData" }, 0] }, // True if feedback exists
+                isRating: { $gt: [{ $size: "$feedbackData" }, 0] }, // True if rating exists
+                feedback: { $arrayElemAt: ["$feedbackData.feedback", 0] },
+                rating: { $arrayElemAt: ["$feedbackData.rating", 0] }
+              }
+            },
+            {
+              $project: {
+                feedbackData: 0 // Exclude the joined array to keep the response clean
+              }
+            },
+            {
+              $sort: { complaintId: -1 }
+            }
+          ])
+          .toArray();
+  
         resolve(cmp);
-       
       } catch (error) {
         reject(error);
       }
     });
   },
+  
 
   getnotificationById: (userId) => {
     return new Promise(async (resolve, reject) => {

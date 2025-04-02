@@ -242,7 +242,7 @@ getLeaderboard: async () => {
     throw error;
   }
 },
-getDepartmentComplaints :(department, status) => {
+getDepartmentComplaints: (department, status) => {
   return new Promise((resolve, reject) => {
       let query = { department };
 
@@ -252,14 +252,33 @@ getDepartmentComplaints :(department, status) => {
 
       db.get()
           .collection(collections.COMPLAINTS_COLLECTION)
-          .find(query)
-          .sort({ updatedAt: -1 })
+          .aggregate([
+              { $match: query }, // Filter complaints by department and status
+              { 
+                  $lookup: { 
+                      from: collections.GOVT_COLLECTION, // Collection containing user details
+                      localField: "updatedBy", // Field in complaints
+                      foreignField: "Email", // Matching field in users collection
+                      as: "updatedUser" 
+                  }
+              },
+              { 
+                  $addFields: { 
+                      updatedByDesignation: { $arrayElemAt: ["$updatedUser.Designation", 0] } 
+                  }
+              },
+              { 
+                  $project: { 
+                      updatedUser: 0 // Exclude full user object after extracting designation
+                  } 
+              },
+              { $sort: { updatedAt: -1 } } // Sort by latest updated complaints
+          ])
           .toArray()
           .then((complaints) => resolve(complaints))
           .catch((err) => reject(err));
   });
-},
-sendNotification :async (userId, message) => {
+},sendNotification :async (userId, message) => {
   try {
       await db.get().collection(collections.NOTIFICATIONS_COLLECTION).insertOne({
           userId: objectId(userId),

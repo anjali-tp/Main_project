@@ -235,7 +235,6 @@ router.get("/department-complaints/:department", async (req, res) => {
       const { status } = req.query; // Get status filter from query params
 
       const complaints = await adminHelper.getDepartmentComplaints(department, status || "All");
-
       res.render("admin/department-complaints", { admin: true, layout: "admin-layout", administator,complaints, department, status: status || "All" });
   } catch (error) {
       console.error("Error fetching department complaints:", error);

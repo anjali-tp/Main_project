@@ -23,8 +23,12 @@
             <td>{{this.subject}}</td>
             <td>{{this.applicantName}}</td>
             <td>{{this.status}}</td>
-            <td>{{this.updatedBy}}</td>
-            <td>{{formatDate this.updatedAt}}</td>
+             <td>{{this.updatedByDesignation}}</td>
+            <td> {{#if this.updatedAt}}
+  {{formatDate this.updatedAt}}
+{{else}}
+  
+{{/if}}</td>
         </tr>
         {{else}}
         <tr>
