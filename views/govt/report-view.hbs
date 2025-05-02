@@ -24,8 +24,8 @@
             <td>{{this.complaintId}}</td>
             <td>{{this.category}}</td>
             <td>{{this.status}}</td>
-            <td>{{this.updatedBy}}</td>
-            <td>{{formatDateTime this.updatedAt}}</td>
+             <td>{{nameFromEmail this.updatedBy}}</td>
+            <td>{{formatDate this.updatedAt}}</td>
         </tr>
         {{/each}}
     {{else}}

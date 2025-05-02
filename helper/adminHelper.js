@@ -430,6 +430,22 @@ getDepartmentComplaints: (department, status) => {
       }
     });
   },
+  getAllGovt: () => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const users = await db
+          .get()
+          .collection(collections.GOVT_COLLECTION)
+          .find()
+          .sort({ createdAt: -1 })  // Sort by createdAt in descending order
+          .toArray();
+
+        resolve(users);
+      } catch (err) {
+        reject(err);  // Handle any error during fetching
+      }
+    });
+  },
 
 
   removeUser: (userId) => {

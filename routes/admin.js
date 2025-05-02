@@ -328,6 +328,13 @@ router.get("/all-users", verifySignedIn, function (req, res) {
   });
 });
 
+router.get("/all-govt", verifySignedIn, function (req, res) {
+  let administator = req.session.admin;
+  adminHelper.getAllGovt().then((users) => {
+    res.render("admin/users/all-govt", { admin: true, layout: "admin-layout", administator, users });
+  });
+});
+
 router.post("/block-user/:id", (req, res) => {
   const userId = req.params.id;
   const { reason } = req.body;

@@ -17,12 +17,11 @@
                     </div>
                     <div class="col-3">
                         <a href="#" class="report-trigger" data-route="/govt/under-process-report">
-                            <div class="feature-card mx-auto text-center">
-                                <div class="card mx-auto bg-gray">
-                                    <i class="bi bi-pc-display"></i>
-                                </div>
+                        <div class="feature-card mx-auto text-center">
+                                <div class="card mx-auto bg-gray"><i class="bi bi-cone text-primary"></i></div>
                                 <p class="mb-0">Under Process Complaints</p>
                             </div>
+                            
                         </a>
                     </div>
                     <div class="col-3">
@@ -82,6 +81,9 @@
             $("#toDate").val("");
             $("#error-message").text(""); // Clear previous errors
             $("#reportModal").modal("show");
+            let today = new Date().toISOString().split("T")[0];
+            $("#fromDate").attr("max", today);
+            $("#toDate").attr("max", today);
         });
 
         $("#reportForm").on("submit", function (e) {

@@ -39,6 +39,12 @@ app.engine(
       encodeURIComponent: function (str) {
       return encodeURIComponent(str);
     },
+    nameFromEmail:function(email){
+      if (email && typeof email === "string") {
+        return email.split("@")[0];
+      }
+      return "";
+    },
       formatDateTime:(dateTime) => {
         if (!dateTime) return "Not Available"; // Handle null, undefined, or empty values
     let formattedDate = moment(dateTime, "YYYY-MM-DDTHH:mm", true); // Strict parsing
